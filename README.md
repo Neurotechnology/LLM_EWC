@@ -26,9 +26,22 @@ Then the params can be computed using the following:
 compute_ewc_params.sh
 ```
 
+To run training, you first need to export your huggingface dataset token:
+```bash
+export DATASET_TOKEN=hf_tokentokentokentoken
+```
+
+Then, after editing paths in the file `run_gemma2-2b_culturaX.sh`, the training can be run:
+
+```bash
+bash run_gemma2-2b_culturaX.sh
+```
+
+Don't forget to press 3 when `wandb` asks you whether to save your training stats!
+
+NOTE!
+If you modify the dataset, remember to clear your cache!
+Otherwise it will find the old dataset and not re-tokenize/re-group the text.
+
 ## TODO
-
-I will move over code from the local repo to this one because it has a lot of
-naughty stuff leftover, such as access tokens, swearwords and maybe even some
-info we may not want to leak.
-
+- [ ] Generalise EWC code
