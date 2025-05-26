@@ -37,8 +37,6 @@ Then, after editing paths in the file `run_gemma2-2b_culturaX.sh`, the training 
 bash run_gemma2-2b_culturaX.sh
 ```
 
-Don't forget to press 3 when `wandb` asks you whether to save your training stats!
-
 NOTE!
 If you modify the dataset, remember to clear your cache!
 Otherwise it will find the old dataset and not re-tokenize/re-group the text.
