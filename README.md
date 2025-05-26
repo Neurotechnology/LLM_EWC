@@ -34,7 +34,13 @@ export DATASET_TOKEN=hf_tokentokentokentoken
 Then, after editing paths in the file `run_gemma2-2b_culturaX.sh`, the training can be run:
 
 ```bash
-bash run_gemma2-2b_culturaX.sh
+bash run_gemma2-2b_culturaX.sh 1e2
+```
+
+Or several of them can be run:
+
+```bash
+bash run_all.sh
 ```
 
 NOTE!
