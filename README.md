@@ -1,6 +1,6 @@
 # Neuro EWC on LLM
 
-This is the implementation code for the preprint [Elastic Weight Consolidation for Full-Parameter Continual Pre-Training of Gemma2](https://arxiv.org/abs/2505.05946).
+This is the implementation code for the preprint [Full-Parameter Continual Pretraining of Gemma2: Insights into Fluency and Domain Knowledge](https://arxiv.org/abs/2505.05946).
 
 ## Installation
 
