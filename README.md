@@ -42,4 +42,5 @@ If you modify the dataset, remember to clear your cache!
 Otherwise it will find the old dataset and not re-tokenize/re-group the text.
 
 ## TODO
-- [ ] Generalise EWC code
+- [ ] Generalise EWC model code
+- [ ] Parallelize Fisher computation code
