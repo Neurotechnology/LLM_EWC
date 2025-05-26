@@ -6,8 +6,10 @@ import math
 import os
 import re
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 
+from tqdm import tqdm
 from dataclasses import dataclass, field
 from datasets import load_dataset, concatenate_datasets, Dataset
 from peft import (
@@ -49,6 +51,25 @@ import torch
 import transformers
 
 from gemma_ewc import GemmaEWC
+
+def split_tokens(example, block_size, window_size) -> list:
+    all_chunks = {'input_ids': [], 'labels': []}
+    for tokens in example['input_ids']:
+        total_length = len(tokens)
+        # Start index for each chunk
+        start_index = 0
+        while start_index < total_length:
+            end_index = min(start_index + block_size, total_length)
+            # Append the chunk to the grouped inputs
+            all_chunks['input_ids'].append(tokens[start_index:end_index])
+            all_chunks['labels'].append(tokens[start_index:end_index])
+            # Code readibility is important
+            if end_index < total_length:
+                start_index = end_index - window_size
+            else:
+                # This could be a break
+                start_index = total_length
+    return all_chunks
 
 
 def prepare_model_for_kbit_training(model, use_gradient_checkpointing=True):
@@ -510,7 +531,7 @@ def main():
     
 
     
-    def group_texts_2(dataset, block_size=128, window_size=50):
+    def group_texts_2(dataset, block_size=128, window_size=50, num_proc = 1):
         """
         Groups tokenized texts into chunks with a maximum block size, with overlap defined by window size.
 
@@ -523,26 +544,17 @@ def main():
         - A new dataset with texts grouped according to the specified block size and window size.
         """
         # Initialize lists to hold the grouped tokens
-        grouped_inputs = []
 
-        # Iterate over each example in the dataset
-        for example in dataset:
-            tokens = example['input_ids']
-            total_length = len(tokens)
-            # Start index for each chunk
-            start_index = 0
-            while start_index < total_length:
-                end_index = min(start_index + block_size, total_length)
-                # Append the chunk to the grouped inputs
-                grouped_inputs.append(tokens[start_index:end_index])
-                # Code readibility is important
-                if end_index < total_length:
-                    start_index = end_index - window_size
-                else:
-                    start_index = total_length
+        grouped_dataset = dataset.map(
+                lambda x: split_tokens(x, block_size, window_size),
+                remove_columns = dataset.column_names,
+                batched=True,
+                num_proc = num_proc,
+                desc="Grouping texts",
+                )
 
         # Create a new dataset from the grouped inputs
-        grouped_dataset = Dataset.from_dict({'input_ids': grouped_inputs, 'labels': grouped_inputs})
+        #grouped_dataset = Dataset.from_dict({'input_ids': grouped_inputs, 'labels': grouped_inputs})
         return grouped_dataset
     
     lm_datasets_ls = []
@@ -563,7 +575,8 @@ def main():
                     logger.info(f'Loading dataset from {cache_path}')
                     processed_dataset = datasets.load_from_disk(cache_path, keep_in_memory=False)
 
-                except Exception:
+                except Exception as e:
+                    logger.error(e)
                     cache_dir = os.path.join(data_args.data_cache_dir, filename+f"_text_{block_size}")
 
                     if os.path.isdir(dataset_name) and False:
@@ -575,7 +588,7 @@ def main():
                                 "lt",
                                 token=data_args.dataset_token,                                 
                                 streaming=False, # optional
-                                               split="train",
+                                split="train",
                                 cache_dir=data_args.data_cache_dir) # optional, but the dataset only has a train split
                         
                     existing_columns = dataset.column_names
@@ -585,7 +598,7 @@ def main():
                     tokenized_dataset = dataset.map(
                                 tokenize_function,
                                 batched=True,
-                                num_proc=data_args.preprocessing_num_workers,
+                                num_proc=1 if tokenizer.is_fast else data_args.preprocessing_num_workers,
                                 remove_columns=columns_to_remove,
                                 load_from_cache_file=True,
                                 keep_in_memory=False,
@@ -595,7 +608,8 @@ def main():
                     grouped_datasets = group_texts_2(
                             tokenized_dataset,
                             block_size=block_size,
-                            window_size=block_size//2)
+                            window_size=block_size//2,
+                            num_proc = data_args.preprocessing_num_workers)
                 
                     processed_dataset = grouped_datasets
                     processed_dataset.save_to_disk(cache_path)

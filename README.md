@@ -12,7 +12,7 @@ by inserting the following lines:
 Then build the image and run container:
 ```bash
 docker build -t llm_ewc .
-./run_docker.sh
+bash run_docker.sh
 ```
 
 ## Running
@@ -23,7 +23,7 @@ We created a handy script that you need to modify at `compute_ewc_params.sh`.
 Then the params can be computed using the following:
 
 ```bash
-compute_ewc_params.sh
+bash compute_ewc_params.sh
 ```
 
 To run training, you first need to export your huggingface dataset token:

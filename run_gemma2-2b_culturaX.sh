@@ -45,5 +45,6 @@ torchrun --nnodes 1 --nproc_per_node ${nproc_per_node} run_clm_pt.py \
     --load_in_kbits 16 \
     --gradient_checkpointing \
     --ddp_find_unused_parameters False\
+    --report-to none \
     --EWC_lambda ${EWC_lambda}\
     --EWC_param_dir ${EWC_param_dir}
