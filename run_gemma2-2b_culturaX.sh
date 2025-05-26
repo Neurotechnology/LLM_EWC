@@ -1,5 +1,5 @@
 lr=2e-4
-EWC_lambda=1e2
+EWC_lambda=$1
 EWC_param_dir=<...>/EWC_params_test.pkl
 pretrained_model=<...>/models/gemma-2-2b-it/
 tokenizer_path=<...>/models/gemma-2-2b-it/
