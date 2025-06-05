@@ -1,13 +1,13 @@
 lr=2e-4
 EWC_lambda=$1
-EWC_param_dir=<...>/EWC_params_test.pkl
-pretrained_model=<...>/models/gemma-2-2b-it/
-tokenizer_path=<...>/models/gemma-2-2b-it/
-data_cache=<...>/.cache
-output_dir=<...>/gemma2-2b-it/${EWC_lambda}
+EWC_param_dir=<VOLUME_DOCKER>/ewc_on_llm/EWC_params.pkl
+pretrained_model=<VOLUME_DOCKER>/models/gemma-2-2b-it/
+tokenizer_path=<VOLUME_DOCKER>/models/gemma-2-2b-it/
+data_cache=${HOME}/.cache
+output_dir=<VOLUME_DOCKER>/ewc_on_llm/ewc_test/gemma2-2b-it/${EWC_lambda}
 dataset=uonlp/CulturaX
-per_device_train_batch_size=4
-gradient_accumulation_steps=4
+per_device_train_batch_size=8
+gradient_accumulation_steps=1
 block_size=512
 nproc_per_node=8 # How many GPUs this is run on
 deepspeed_config_file=ds_no_offload.json
@@ -24,7 +24,7 @@ torchrun --nnodes 1 --nproc_per_node ${nproc_per_node} run_clm_pt.py \
     --do_train \
     --seed $RANDOM \
     --bf16 \
-    --num_train_epochs 2 \
+    --num_train_epochs 0.1 \
     --lr_scheduler_type cosine \
     --learning_rate ${lr} \
     --warmup_ratio 0.05 \
@@ -32,8 +32,8 @@ torchrun --nnodes 1 --nproc_per_node ${nproc_per_node} run_clm_pt.py \
     --logging_strategy steps \
     --logging_steps 10 \
     --save_strategy steps \
-    --save_total_limit 3 \
-    --save_steps 5000 \
+    --save_total_limit 1 \
+    --save_steps 10000 \
     --gradient_accumulation_steps ${gradient_accumulation_steps} \
     --preprocessing_num_workers 24 \
     --block_size ${block_size} \
