@@ -9,7 +9,11 @@
     },
 
     "zero_optimization": {
-        "stage": 0
+        "stage": 1,
+        "allgather_partitions": true,
+        "allgather_bucket_size": 1e8,
+        "reduce_scatter": true,
+        "reduce_bucket_size": 1e8
     },
 
     "gradient_accumulation_steps": "auto",

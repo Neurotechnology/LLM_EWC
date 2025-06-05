@@ -52,25 +52,6 @@ import transformers
 
 from gemma_ewc import GemmaEWC
 
-def split_tokens(example, block_size, window_size) -> list:
-    all_chunks = {'input_ids': [], 'labels': []}
-    for tokens in example['input_ids']:
-        total_length = len(tokens)
-        # Start index for each chunk
-        start_index = 0
-        while start_index < total_length:
-            end_index = min(start_index + block_size, total_length)
-            # Append the chunk to the grouped inputs
-            all_chunks['input_ids'].append(tokens[start_index:end_index])
-            all_chunks['labels'].append(tokens[start_index:end_index])
-            # Code readibility is important
-            if end_index < total_length:
-                start_index = end_index - window_size
-            else:
-                # This could be a break
-                start_index = total_length
-    return all_chunks
-
 
 def prepare_model_for_kbit_training(model, use_gradient_checkpointing=True):
     r"""
@@ -530,6 +511,16 @@ def main():
         return result
     
 
+    def split_tokens(examples):
+        example_size = len(examples["input_ids"])
+        result = examples
+        for i in range(0, example_size):
+            if len(result["input_ids"][i]) > block_size:
+                result["input_ids"][i] = result["input_ids"][i][0:block_size]
+                result["attention_mask"][i] = result["attention_mask"][i][0:block_size]
+
+        result["labels"] = result["input_ids"].copy()
+        return result
     
     def group_texts_2(dataset, block_size=128, window_size=50, num_proc = 1):
         """
@@ -546,12 +537,13 @@ def main():
         # Initialize lists to hold the grouped tokens
 
         grouped_dataset = dataset.map(
-                lambda x: split_tokens(x, block_size, window_size),
-                remove_columns = dataset.column_names,
-                batched=True,
-                num_proc = num_proc,
-                desc="Grouping texts",
-                )
+                    split_tokens,
+                    batched=True,
+                    num_proc=data_args.preprocessing_num_workers,
+                    load_from_cache_file=True,
+                    keep_in_memory=False,
+                    desc=f"Grouping texts in chunks of {block_size}",
+        )
 
         # Create a new dataset from the grouped inputs
         #grouped_dataset = Dataset.from_dict({'input_ids': grouped_inputs, 'labels': grouped_inputs})
@@ -701,7 +693,7 @@ def main():
     else:
         load_in_4bit = False
         load_in_8bit = False
-        quantization_config = None 
+        quantization_config = None
     if quantization_config is not None:
         logger.info(f"quantization_config:{quantization_config.to_dict()}")
     if model_args.model_name_or_path:
@@ -768,6 +760,7 @@ def main():
                     module = module.to(torch.float16)
 
 
+    logger.info(train_dataset)
     trainer = Trainer(
         model=model,
         args=training_args,

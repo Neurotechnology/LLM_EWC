@@ -26,9 +26,21 @@ Then the params can be computed using the following:
 bash compute_ewc_params.sh
 ```
 
-To run training, you first need to export your huggingface dataset token:
+To run training, you first need to export relevant environment variables.
+`DATASET_TOKEN` is the dataset token from huggingface, while `TRANSFORMERS_CACHE` is the cache location used by the transformers library.
 ```bash
 export DATASET_TOKEN=hf_tokentokentokentoken
+export TRANSFORMERS_CACHE=<...>/.cache
+```
+The exporting can be done automatically while running the container.
+The `run_docker.sh` file needs the following argument added:
+```bash
++       --env-file .env \
+```
+And the `.env`. file should look like the following:
+```
+DATASET_TOKEN=hf_tokentokentokentoken
+TRANSFORMERS_CACHE=<...>/.cache
 ```
 
 Then, after editing paths in the file `run_gemma2-2b_culturaX.sh`, the training can be run:
@@ -43,9 +55,21 @@ Or several of them can be run:
 bash run_all.sh
 ```
 
-NOTE!
+**NOTE!**
+
 If you modify the dataset, remember to clear your cache!
 Otherwise it will find the old dataset and not re-tokenize/re-group the text.
+
+## Evaluation
+
+We evaluated the models using the [Language Model Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness).
+You will need to install it yourself by following the instructions.
+An example shell script is provided at `eval.sh`
+
+**IMPORTANT!**
+
+Setting batch size over 1 ruins the performance on the `gsm` benchmark!
+
 
 ## TODO
 - [ ] Generalise EWC model code
